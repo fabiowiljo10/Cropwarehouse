@@ -1,189 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CropVault — Warehouse Monitor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CropVault — Warehouse Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
 <header>
-  <div class="wrapper">
-    <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">🌾</div>
-        <div class="logo-text">Crop<span>Vault</span></div>
-      </div>
-      <div class="status-badge">
-        <div class="pulse"></div>
-        LIVE MONITORING
-      </div>
-    </div>
-  </div>
+  <div class="wrapper">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🌾</div>
+        <div class="logo-text">Crop<span>Vault</span></div>
+      </div>
+      <div class="status-badge">
+        <div class="pulse"></div>
+        LIVE MONITORING
+      </div>
+    </div>
+  </div>
 </header>
 
 <main>
-  <div class="wrapper">
+  <div class="wrapper">
 
-    <div class="alert-banner" id="alertBanner">
-      <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-        <span class="alert-icon">⚠️</span>
-        <span id="alertText">Threshold exceeded!</span>
-      </div>
-      <button id="silenceBtn" onclick="silenceBuzzer()" class="silence-button">Mute Alarm</button>
-    </div>
+    <div class="alert-banner" id="alertBanner">
+      <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+        <span class="alert-icon">⚠️</span>
+        <span id="alertText">Threshold exceeded!</span>
+      </div>
+      <button id="silenceBtn" onclick="silenceBuzzer()" class="silence-button">Mute Alarm</button>
+    </div>
 
-    <div class="section-title">Live Readings</div>
-    <div class="readings-grid">
-      <div class="reading-card" id="tempCard">
-        <div class="reading-label">Temperature</div>
-        <div class="reading-value" id="tempValue">--<span class="reading-unit">°C</span></div>
-        <div class="reading-status" id="tempStatus">● Normal</div>
-        <div class="reading-bg-icon">🌡️</div>
-      </div>
-      <div class="reading-card" id="humidCard">
-        <div class="reading-label">Humidity</div>
-        <div class="reading-value" id="humidValue">--<span class="reading-unit">%</span></div>
-        <div class="reading-status" id="humidStatus">● Normal</div>
-        <div class="reading-bg-icon">💧</div>
-      </div>
-    </div>
+    <div class="section-title">Live Readings</div>
+    <div class="readings-grid">
+      <div class="reading-card" id="tempCard">
+        <div class="reading-label">Temperature</div>
+        <div class="reading-value" id="tempValue">--<span class="reading-unit">°C</span></div>
+        <div class="reading-status" id="tempStatus">● Normal</div>
+        <div class="reading-bg-icon">🌡️</div>
+      </div>
+      <div class="reading-card" id="humidCard">
+        <div class="reading-label">Humidity</div>
+        <div class="reading-value" id="humidValue">--<span class="reading-unit">%</span></div>
+        <div class="reading-status" id="humidStatus">● Normal</div>
+        <div class="reading-bg-icon">💧</div>
+      </div>
+    </div>
 
-    <div class="section-title">Threshold Settings</div>
-    <div class="threshold-section">
-      <div class="threshold-grid">
-        <div class="threshold-item">
-          <label>Max Temperature (°C)</label>
-          <input type="number" id="tempThreshold" value="30" min="0" max="100">
-          <div class="threshold-hint">Alert triggers above this value</div>
-        </div>
-        <div class="threshold-item">
-          <label>Max Humidity (%)</label>
-          <input type="number" id="humidThreshold" value="70" min="0" max="100">
-          <div class="threshold-hint">Alert triggers above this value</div>
-        </div>
-      </div>
-    </div>
+    <div class="section-title">Threshold Settings</div>
+    <div class="threshold-section">
+      <div class="threshold-grid">
+        <div class="threshold-item">
+          <label>Max Temperature (°C)</label>
+          <input type="number" id="tempThreshold" value="30" min="0" max="100">
+          <div class="threshold-hint">Alert triggers above this value</div>
+        </div>
+        <div class="threshold-item">
+          <label>Max Humidity (%)</label>
+          <input type="number" id="humidThreshold" value="70" min="0" max="100">
+          <div class="threshold-hint">Alert triggers above this value</div>
+        </div>
+      </div>
+    </div>
 
-    <div class="section-title">Statistics</div>
-    <div class="stats-section">
-      <div class="stats-header">
-        <div class="period-tabs">
-          <button class="period-tab active" onclick="setPeriod('weekly',this)">Weekly</button>
-          <button class="period-tab" onclick="setPeriod('monthly',this)">Monthly</button>
-          <button class="period-tab" onclick="setPeriod('yearly',this)">Yearly</button>
-        </div>
-        <div class="metric-tabs">
-          <button class="metric-tab active" onclick="setMetric('temp',this)">Temperature</button>
-          <button class="metric-tab" onclick="setMetric('humid',this)">Humidity</button>
-        </div>
-      </div>
+    <div class="section-title">Statistics</div>
+    <div class="stats-section">
+      <div class="stats-header">
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="setPeriod('weekly',this)">Weekly</button>
+          <button class="period-tab" onclick="setPeriod('monthly',this)">Monthly</button>
+          <button class="period-tab" onclick="setPeriod('yearly',this)">Yearly</button>
+        </div>
+        <div class="metric-tabs">
+          <button class="metric-tab active" onclick="setMetric('temp',this)">Temperature</button>
+          <button class="metric-tab" onclick="setMetric('humid',this)">Humidity</button>
+        </div>
+      </div>
 
-     <div class="readings-grid">
-      <div class="reading-card" id="tempCard">
-        <div class="reading-label">Temperature</div>
-        <div class="reading-value" id="tempValue">--<span class="reading-unit">°C</span></div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="tempBar"></div></div>
-        <div class="reading-status" id="tempStatus">● Normal</div>
-        <div class="reading-bg-icon">🌡️</div>
-      </div>
-      <div class="reading-card" id="humidCard">
-        <div class="reading-label">Humidity</div>
-        <div class="reading-value" id="humidValue">--<span class="reading-unit">%</span></div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="humidBar"></div></div>
-        <div class="reading-status" id="humidStatus">● Normal</div>
-        <div class="reading-bg-icon">💧</div>
-      </div>
-    </div>
+      <div class="chart-container">
+        <canvas id="liveChart"></canvas>
+      </div>
 
-    <div class="section-title">Threshold Settings</div>
-    <div class="threshold-section">
-      <div class="threshold-grid">
-        <div class="threshold-item">
-          <div style="display: flex; justify-content: space-between;">
-            <label>Max Temperature (°C)</label>
-            <span id="tempSliderVal" class="slider-val">30°C</span>
-          </div>
-          <input type="range" id="tempThreshold" value="30" min="0" max="60" class="interactive-slider">
-          <div class="threshold-hint">Alert triggers above this value</div>
-        </div>
-        <div class="threshold-item">
-          <div style="display: flex; justify-content: space-between;">
-            <label>Max Humidity (%)</label>
-            <span id="humidSliderVal" class="slider-val">70%</span>
-          </div>
-          <input type="range" id="humidThreshold" value="70" min="0" max="100" class="interactive-slider">
-          <div class="threshold-hint">Alert triggers above this value</div>
-        </div>
-      </div>
-    </div>
+      <div class="stats-summary">
+        <div class="stat-box">
+          <div class="stat-box-label">Average</div>
+          <div class="stat-box-value" id="statAvg">--<span class="stat-box-unit"> </span></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Maximum</div>
+          <div class="stat-box-value" id="statMax">--<span class="stat-box-unit"> </span></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Minimum</div>
+          <div class="stat-box-value" id="statMin">--<span class="stat-box-unit"> </span></div>
+        </div>
+      </div>
+    </div>
 
-      <div class="chart-container">
-        <canvas id="liveChart"></canvas>
-      </div>
+    <div class="section-title">Crop Storage Guide</div>
+    <div class="crop-search-section">
+      <div class="quick-crops" id="quickCrops"></div>
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="crop-search-input" id="cropSearchInput" placeholder="Search a crop — e.g. Rice, Potato, Onion..." autocomplete="off">
+          <div class="autocomplete-list" id="autocompleteList"></div>
+        </div>
+      </div>
+      <div class="crop-result" id="cropResult">
+        <div class="crop-result-header">
+          <div class="crop-result-emoji" id="cropEmoji">🌾</div>
+          <div>
+            <div class="crop-result-name" id="cropName">—</div>
+            <div class="crop-result-category" id="cropCategory">—</div>
+          </div>
+        </div>
+        <div class="crop-result-body">
+          <div class="crop-stat">
+            <div class="crop-stat-label">🌡️ Recommended Temperature</div>
+            <div class="crop-stat-value" id="cropTemp">—</div>
+            <div class="crop-stat-range" id="cropTempRange">—</div>
+            <div id="tempCompareBadge"></div>
+          </div>
+          <div class="crop-stat">
+            <div class="crop-stat-label">💧 Recommended Humidity</div>
+            <div class="crop-stat-value" id="cropHumid">—</div>
+            <div class="crop-stat-range" id="cropHumidRange">—</div>
+            <div id="humidCompareBadge"></div>
+          </div>
+          <div class="crop-notes" id="cropNotes"></div>
+        </div>
+      </div>
+    </div>
 
-      <div class="stats-summary">
-        <div class="stat-box">
-          <div class="stat-box-label">Average</div>
-          <div class="stat-box-value" id="statAvg">--<span class="stat-box-unit"> </span></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Maximum</div>
-          <div class="stat-box-value" id="statMax">--<span class="stat-box-unit"> </span></div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-box-label">Minimum</div>
-          <div class="stat-box-value" id="statMin">--<span class="stat-box-unit"> </span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-title">Crop Storage Guide</div>
-    <div class="crop-search-section">
-      <div class="quick-crops" id="quickCrops"></div>
-      <div class="search-bar">
-        <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="crop-search-input" id="cropSearchInput" placeholder="Search a crop — e.g. Rice, Potato, Onion..." autocomplete="off">
-          <div class="autocomplete-list" id="autocompleteList"></div>
-        </div>
-      </div>
-      <div class="crop-result" id="cropResult">
-        <div class="crop-result-header">
-          <div class="crop-result-emoji" id="cropEmoji">🌾</div>
-          <div>
-            <div class="crop-result-name" id="cropName">—</div>
-            <div class="crop-result-category" id="cropCategory">—</div>
-          </div>
-        </div>
-        <div class="crop-result-body">
-          <div class="crop-stat">
-            <div class="crop-stat-label">🌡️ Recommended Temperature</div>
-            <div class="crop-stat-value" id="cropTemp">—</div>
-            <div class="crop-stat-range" id="cropTempRange">—</div>
-            <div id="tempCompareBadge"></div>
-          </div>
-          <div class="crop-stat">
-            <div class="crop-stat-label">💧 Recommended Humidity</div>
-            <div class="crop-stat-value" id="cropHumid">—</div>
-            <div class="crop-stat-range" id="cropHumidRange">—</div>
-            <div id="humidCompareBadge"></div>
-          </div>
-          <div class="crop-notes" id="cropNotes"></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
+  </div>
 </main>
 
 <footer>
-  <div class="wrapper">
-    CropVault Warehouse Monitor &nbsp;·&nbsp; Auto-refresh every 3s &nbsp;·&nbsp; All times local
-  </div>
+  <div class="wrapper">
+    CropVault Warehouse Monitor &nbsp;·&nbsp; Auto-refresh every 3s &nbsp;·&nbsp; All times local
+  </div>
 </footer>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
