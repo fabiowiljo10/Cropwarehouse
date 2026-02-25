@@ -41,12 +41,14 @@
       <div class="reading-card" id="tempCard">
         <div class="reading-label">Temperature</div>
         <div class="reading-value" id="tempValue">--<span class="reading-unit">°C</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="tempBar"></div></div>
         <div class="reading-status" id="tempStatus">● Normal</div>
         <div class="reading-bg-icon">🌡️</div>
       </div>
       <div class="reading-card" id="humidCard">
         <div class="reading-label">Humidity</div>
         <div class="reading-value" id="humidValue">--<span class="reading-unit">%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="humidBar"></div></div>
         <div class="reading-status" id="humidStatus">● Normal</div>
         <div class="reading-bg-icon">💧</div>
       </div>
@@ -56,13 +58,19 @@
     <div class="threshold-section">
       <div class="threshold-grid">
         <div class="threshold-item">
-          <label>Max Temperature (°C)</label>
-          <input type="number" id="tempThreshold" value="30" min="0" max="100">
+          <div style="display: flex; justify-content: space-between;">
+            <label>Max Temperature (°C)</label>
+            <span id="tempSliderVal" class="slider-val">30°C</span>
+          </div>
+          <input type="range" id="tempThreshold" value="30" min="0" max="60" class="interactive-slider">
           <div class="threshold-hint">Alert triggers above this value</div>
         </div>
         <div class="threshold-item">
-          <label>Max Humidity (%)</label>
-          <input type="number" id="humidThreshold" value="70" min="0" max="100">
+          <div style="display: flex; justify-content: space-between;">
+            <label>Max Humidity (%)</label>
+            <span id="humidSliderVal" class="slider-val">70%</span>
+          </div>
+          <input type="range" id="humidThreshold" value="70" min="0" max="100" class="interactive-slider">
           <div class="threshold-hint">Alert triggers above this value</div>
         </div>
       </div>
