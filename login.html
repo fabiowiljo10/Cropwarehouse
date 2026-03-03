@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CropVault — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --green: #3fb950;
+    --green-dim: #1a4a26;
+    --accent: #7ee787;
+    --red: #f85149;
+    --red-dim: #4a1a1a;
+    --blue: #58a6ff;
+    --text: #e6edf3;
+    --muted: #7d8590;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(63,185,80,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63,185,80,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Glow orb */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 500px;
+    background: radial-gradient(ellipse at center, rgba(63,185,80,0.08) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    background: rgba(13,17,23,0.9);
+    backdrop-filter: blur(12px);
+    position: relative; z-index: 10;
+  }
+  .header-inner {
+    max-width: 1280px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #3fb950, #7ee787);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+  .logo-text span { color: var(--accent); }
+  .status-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 20px;
+  }
+  .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ── MAIN ── */
+  main {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 40px 24px;
+    position: relative; z-index: 1;
+  }
+
+  .login-container {
+    width: 100%; max-width: 440px;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Top label */
+  .login-eyebrow {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 28px;
+    display: flex; align-items: center; gap: 12px; justify-content: center;
+  }
+  .login-eyebrow::before,
+  .login-eyebrow::after {
+    content: '';
+    flex: 1; height: 1px; background: var(--border);
+    max-width: 60px;
+  }
+
+  /* Card */
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+
+  .login-card-header {
+    padding: 32px 32px 28px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    background: linear-gradient(160deg, #1a2e1a 0%, #161b22 60%);
+  }
+  .login-card-header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 32px; right: 32px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(126,231,135,0.3), transparent);
+  }
+
+  .login-icon-wrap {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #3fb950, #7ee787);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(63,185,80,0.25);
+  }
+  .login-title {
+    font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .login-subtitle { font-size: 14px; color: var(--muted); }
+
+  /* Form body */
+  .login-body { padding: 28px 32px 32px; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 12px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; pointer-events: none;
+    opacity: 0.5;
+  }
+  .field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px 13px 42px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(126,231,135,0.1);
+    background: #1f2a1f;
+  }
+  .field input::placeholder { color: var(--muted); }
+
+  /* Password toggle */
+  .toggle-pw {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--muted); cursor: pointer; font-size: 16px;
+    padding: 4px; transition: color 0.2s;
+  }
+  .toggle-pw:hover { color: var(--text); }
+
+  /* Remember + Forgot */
+  .field-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .remember {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+  }
+  .remember input[type="checkbox"] { display: none; }
+  .checkbox-box {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 5px; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .remember input[type="checkbox"]:checked + .checkbox-box {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .remember input[type="checkbox"]:checked + .checkbox-box::after {
+    content: '✓'; color: #0d1117; font-size: 12px; font-weight: 700;
+  }
+  .remember-label { font-size: 13px; color: var(--muted); }
+  .forgot-link {
+    font-size: 13px; color: var(--blue);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .forgot-link:hover { color: var(--accent); }
+
+  /* Error msg */
+  .error-msg {
+    display: none;
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px; color: #ff8080;
+    margin-bottom: 20px;
+    animation: shake 0.35s ease;
+  }
+  .error-msg.show { display: flex; align-items: center; gap: 8px; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+
+  /* Submit button */
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, #3fb950, #7ee787);
+    border: none; border-radius: 10px;
+    padding: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 800;
+    color: #0d1117; cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(63,185,80,0.3);
+    position: relative; overflow: hidden;
+  }
+  .btn-login:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(63,185,80,0.35); }
+  .btn-login:active { transform: translateY(0); }
+  .btn-login.loading { pointer-events: none; opacity: 0.7; }
+  .btn-login .btn-text { transition: opacity 0.2s; }
+  .btn-login .btn-spinner {
+    display: none; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 20px; height: 20px;
+    border: 2px solid rgba(13,17,23,0.3);
+    border-top-color: #0d1117;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  .btn-login.loading .btn-text { opacity: 0; }
+  .btn-login.loading .btn-spinner { display: block; }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* Divider */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 22px 0;
+    font-size: 12px; color: var(--muted); letter-spacing: 1px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* Sign up link */
+  .signup-row {
+    text-align: center; font-size: 14px; color: var(--muted);
+    margin-top: 22px;
+  }
+  .signup-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .signup-row a:hover { text-decoration: underline; }
+
+  /* Feature pills below card */
+  .feature-pills {
+    display: flex; justify-content: center; gap: 10px;
+    margin-top: 24px; flex-wrap: wrap;
+  }
+  .pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .pill:nth-child(1) { animation-delay: 0.1s; }
+  .pill:nth-child(2) { animation-delay: 0.2s; }
+  .pill:nth-child(3) { animation-delay: 0.3s; }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0; text-align: center;
+    font-size: 12px; color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    position: relative; z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">🌾</div>
+      <div class="logo-text">Crop<span>Vault</span></div>
+    </a>
+    <div class="status-badge">
+      <div class="pulse"></div>
+      SECURE LOGIN
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+  <div class="login-container">
+
+    <div class="login-eyebrow">Warehouse Access Portal</div>
+
+    <div class="login-card">
+
+      <!-- Card Header -->
+      <div class="login-card-header">
+        <div class="login-icon-wrap">🌾</div>
+        <div class="login-title">Welcome back</div>
+        <div class="login-subtitle">Sign in to monitor your warehouse</div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="login-body">
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg">
+          <span>⚠️</span>
+          <span id="errorText">Invalid email or password.</span>
+        </div>
+
+        <!-- Email -->
+        <div class="field">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="emailInput" placeholder="you@warehouse.com" autocomplete="email">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <label>Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="passwordInput" placeholder="Enter your password" autocomplete="current-password">
+            <button class="toggle-pw" id="togglePw" tabindex="-1" title="Show/hide password">👁️</button>
+          </div>
+        </div>
+
+        <!-- Remember + Forgot -->
+        <div class="field-row">
+          <label class="remember">
+            <input type="checkbox" id="rememberMe">
+            <div class="checkbox-box"></div>
+            <span class="remember-label">Remember me</span>
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-login" id="loginBtn">
+          <span class="btn-text">Sign In →</span>
+          <span class="btn-spinner"></span>
+        </button>
+
+        <div class="divider">or</div>
+
+        <!-- Sign up -->
+        <div class="signup-row">
+          Don't have an account? <a href="#">Request Access</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Feature pills -->
+    <div class="feature-pills">
+      <div class="pill"><div class="pill-dot"></div> Live Monitoring</div>
+      <div class="pill"><div class="pill-dot"></div> Threshold Alerts</div>
+      <div class="pill"><div class="pill-dot"></div> Crop Storage Guide</div>
+    </div>
+
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  CropVault Warehouse Monitor &nbsp;·&nbsp; Secure Access &nbsp;·&nbsp; All rights reserved
+</footer>
+
+<script>
+  const emailInput    = document.getElementById('emailInput');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn      = document.getElementById('loginBtn');
+  const errorMsg      = document.getElementById('errorMsg');
+  const errorText     = document.getElementById('errorText');
+  const togglePw      = document.getElementById('togglePw');
+
+  // Demo credentials
+  const DEMO_EMAIL    = 'admin@cropvault.com';
+  const DEMO_PASSWORD = 'cropvault123';
+
+  // Password visibility toggle
+  togglePw.addEventListener('click', () => {
+    const isText = passwordInput.type === 'text';
+    passwordInput.type = isText ? 'password' : 'text';
+    togglePw.textContent = isText ? '👁️' : '🙈';
+  });
+
+  // Clear error on typing
+  [emailInput, passwordInput].forEach(el => {
+    el.addEventListener('input', () => {
+      errorMsg.classList.remove('show');
+      el.style.borderColor = '';
+    });
+  });
+
+  // Enter key support
+  [emailInput, passwordInput].forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+  });
+
+  loginBtn.addEventListener('click', handleLogin);
+
+  function handleLogin() {
+    const email    = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    // Basic validation
+    if (!email) {
+      showError('Please enter your email address.', emailInput); return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('Please enter a valid email address.', emailInput); return;
+    }
+    if (!password) {
+      showError('Please enter your password.', passwordInput); return;
+    }
+
+    // Loading state
+    loginBtn.classList.add('loading');
+    errorMsg.classList.remove('show');
+
+    // Simulate auth delay
+    setTimeout(() => {
+      loginBtn.classList.remove('loading');
+
+      // Inside handleLogin() in login.html
+if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+  // Success — Save session and redirect
+  localStorage.setItem('isLoggedIn', 'true'); //
+  
+  loginBtn.style.background = 'linear-gradient(135deg, #1a4a26, #3fb950)';
+  loginBtn.querySelector('.btn-text').textContent = '✓ Access Granted';
+  
+  setTimeout(() => {
+    window.location.href = 'index.html'; //
+  }, 800);
+} else {
+        showError('Invalid email or password. Try admin@cropvault.com / cropvault123', null);
+      }
+    }, 1400);
+  }
+
+  function showError(msg, focusEl) {
+    errorText.textContent = msg;
+    errorMsg.classList.add('show');
+    if (focusEl) {
+      focusEl.style.borderColor = 'var(--red)';
+      focusEl.focus();
+    }
+  }
+</script>
+</body>
+</html>

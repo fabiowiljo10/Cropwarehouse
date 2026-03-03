@@ -371,10 +371,13 @@ function setPeriod(p, el) {
   // Fetch fresh stats from Google Sheets for the new period
   fetchStats(); 
 }
+<<<<<<< HEAD
 document.getElementById('logoutBtn').addEventListener('click', () => {
   localStorage.removeItem('isLoggedIn'); // Clear login flag
   window.location.href = 'login.html'; // Redirect back to login
 });
+=======
+>>>>>>> 2dded75c15fc71a56cf5bbdf4f79bad3024f54e1
 
 loadCrops();
 
