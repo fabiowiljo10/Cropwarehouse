@@ -9,12 +9,13 @@ const db = firebase.database();
 // ─── STATE & LIVE DATA ───────────────────────────────────────────
 let currentTemp = 0;
 let currentHumid = 0;
+let currentAir = 0; 
 let crops = []; 
 
 let historicalData = {
-  weekly: { temp: new Array(7).fill(0), humid: new Array(7).fill(0) },
-  monthly: { temp: new Array(30).fill(0), humid: new Array(30).fill(0) },
-  yearly: { temp: new Array(12).fill(0), humid: new Array(12).fill(0) }
+  weekly: { temp: new Array(7).fill(0), humid: new Array(7).fill(0), air: new Array(7).fill(0) }, 
+  monthly: { temp: new Array(31).fill(0), humid: new Array(31).fill(0), air: new Array(31).fill(0) },
+  yearly: { temp: new Array(12).fill(0), humid: new Array(12).fill(0), air: new Array(12).fill(0) }
 };
 
 let period = 'weekly';
@@ -35,12 +36,12 @@ async function loadCrops() {
 db.ref('warehouse').on('value', (snapshot) => {
   const data = snapshot.val();
   if (data) {
-    currentTemp = data.temperature;
-    currentHumid = data.humidity;
+    currentTemp = data.temperature || 0;
+    currentHumid = data.humidity || 0;
+    currentAir = data.airQuality || 0; 
     
     updateLiveReadings();
     
-    // Sync with Crop Guide logic
     const currentCropName = document.getElementById('cropName').textContent;
     if (currentCropName !== "—") {
       const crop = crops.find(c => c.name === currentCropName);
@@ -51,14 +52,23 @@ db.ref('warehouse').on('value', (snapshot) => {
 
 // ─── SYNC THRESHOLDS & SILENCE TO FIREBASE ────────────────────────
 function syncThresholdsToFirebase() {
+  const tMin = parseFloat(document.getElementById('tempMinThreshold').value) || 10;
   const tMax = parseFloat(document.getElementById('tempThreshold').value) || 30;
+  const hMin = parseFloat(document.getElementById('humidMinThreshold').value) || 50;
   const hMax = parseFloat(document.getElementById('humidThreshold').value) || 70;
+  const aMax = parseInt(document.getElementById('airThreshold').value) || 1000; 
 
+  localStorage.setItem('tempMinThreshold', tMin);
   localStorage.setItem('tempThreshold', tMax);
+  localStorage.setItem('humidMinThreshold', hMin);
   localStorage.setItem('humidThreshold', hMax);
+  localStorage.setItem('airThreshold', aMax); 
   
+  db.ref('thresholds/tempMin').set(tMin);
   db.ref('thresholds/tempMax').set(tMax);
+  db.ref('thresholds/humidMin').set(hMin);
   db.ref('thresholds/humidMax').set(hMax);
+  db.ref('thresholds/airMax').set(aMax); 
 }
 
 function silenceBuzzer() {
@@ -66,7 +76,6 @@ function silenceBuzzer() {
   const currentlySilenced = btn.classList.contains('active');
   const newState = !currentlySilenced;
   
-  // UI Update
   if (newState) {
     btn.classList.add('active');
     btn.textContent = "Alarm Muted";
@@ -75,39 +84,47 @@ function silenceBuzzer() {
     btn.textContent = "Mute Alarm";
   }
   
-  // Send to ESP32 via Firebase
   db.ref('thresholds/silence').set(newState);
 }
 
 // ─── LIVE READINGS UI UPDATE ─────────────────────────────────────
 function updateLiveReadings() {
-  const tempThresh = parseFloat(document.getElementById('tempThreshold').value) || 30;
-  const humidThresh = parseFloat(document.getElementById('humidThreshold').value) || 70;
+  const tMin = parseFloat(document.getElementById('tempMinThreshold').value) || 10;
+  const tMax = parseFloat(document.getElementById('tempThreshold').value) || 30;
+  const hMin = parseFloat(document.getElementById('humidMinThreshold').value) || 50;
+  const hMax = parseFloat(document.getElementById('humidThreshold').value) || 70;
+  const aMax = parseInt(document.getElementById('airThreshold').value) || 1000;
 
   document.getElementById('tempValue').innerHTML = `${currentTemp.toFixed(1)}<span class="reading-unit">°C</span>`;
   document.getElementById('humidValue').innerHTML = `${currentHumid.toFixed(1)}<span class="reading-unit">%</span>`;
+  document.getElementById('airValue').innerHTML = `${currentAir}<span class="reading-unit"> Level</span>`; 
 
-  const tOver = currentTemp > tempThresh;
-  const hOver = currentHumid > humidThresh;
-  document.getElementById('tempStatus').textContent = tOver ? '● Exceeded' : '● Normal';
-  document.getElementById('humidStatus').textContent = hOver ? '● Exceeded' : '● Normal';
-  const isAnyAlert = tOver || hOver;
+  const tHigh = currentTemp > tMax;
+  const tLow = currentTemp < tMin;
+  const hHigh = currentHumid > hMax;
+  const hLow = currentHumid < hMin;
+  const aOver = currentAir > aMax;
+
+  document.getElementById('tempStatus').textContent = tHigh ? '● Too High' : (tLow ? '● Too Low' : '● Normal');
+  document.getElementById('humidStatus').textContent = hHigh ? '● Too High' : (hLow ? '● Too Low' : '● Normal');
+  document.getElementById('airStatus').textContent = aOver ? '● Exceeded' : '● Normal'; 
   
-  document.getElementById('tempCard').className = 'reading-card' + (tOver ? ' danger' : '');
-  document.getElementById('humidCard').className = 'reading-card' + (hOver ? ' warn' : '');
+  const isAnyAlert = tHigh || tLow || hHigh || hLow || aOver; 
+  
+  document.getElementById('tempCard').className = 'reading-card' + ((tHigh || tLow) ? ' danger' : '');
+  document.getElementById('humidCard').className = 'reading-card' + ((hHigh || hLow) ? ' warn' : '');
+  document.getElementById('airCard').className = 'reading-card' + (aOver ? ' danger' : ''); 
 
   const banner = document.getElementById('alertBanner');
   const sBtn = document.getElementById('silenceBtn');
 
   if (isAnyAlert) {
-    document.getElementById('alertText').textContent = `Alert: Thresholds Exceeded`;
+    document.getElementById('alertText').textContent = `Alert: Warehouse parameters out of safe range!`;
     banner.style.display = 'flex';
-    banner.className = 'alert-banner ' + (tOver ? 'danger' : 'warning');
+    banner.className = 'alert-banner ' + ((tHigh || tLow || aOver) ? 'danger' : 'warning'); 
   } else {
-    // Only clear banner and reset silence when levels are safe
     banner.style.display = 'none';
     
-    // Auto-reset the silence flag in Firebase and UI when alarm condition clears
     db.ref('thresholds/silence').once('value', (snap) => {
         if(snap.val() === true) {
             db.ref('thresholds/silence').set(false);
@@ -126,10 +143,10 @@ function initChart() {
   myChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: [], // Start empty
+      labels: [], 
       datasets: [{
         label: 'Live Reading',
-        data: [], // Start empty
+        data: [], 
         borderColor: '#3fb950',
         backgroundColor: 'rgba(63, 185, 80, 0.1)',
         borderWidth: 2,
@@ -148,38 +165,32 @@ function initChart() {
   });
 }
 
-// Update the chart whenever data changes
 function drawChart() {
   if (!myChart) {
     initChart();
   }
 
-  // 1. Define labels based on the selected period
   let labels = [];
   if (period === 'weekly') {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  labels = [];
-  for (let i = 6; i >= 0; i--) {
-    let d = new Date();
-    d.setDate(d.getDate() - i);
-    labels.push(days[d.getDay()]); // This puts "Today" at the far right
-  
-}
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    labels = [];
+    for (let i = 6; i >= 0; i--) {
+      let d = new Date();
+      d.setDate(d.getDate() - i);
+      labels.push(days[d.getDay()]); 
+    }
   } else if (period === 'monthly') {
-    // Generates 1 to 30
     labels = Array.from({length: 31}, (_, i) => i + 1);
   } else if (period === 'yearly') {
     labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   }
 
-  // 2. Apply new data and labels to the chart
   myChart.data.labels = labels;
   myChart.data.datasets[0].data = historicalData[period][metric];
   
-  // 3. Update Visuals
-  myChart.data.datasets[0].label = metric === 'temp' ? 'Temperature (°C)' : 'Humidity (%)';
-  myChart.data.datasets[0].borderColor = metric === 'temp' ? '#f85149' : '#58a6ff';
-  myChart.data.datasets[0].backgroundColor = metric === 'temp' ? 'rgba(248, 81, 73, 0.1)' : 'rgba(88, 166, 255, 0.1)';
+  myChart.data.datasets[0].label = metric === 'temp' ? 'Temperature (°C)' : metric === 'humid' ? 'Humidity (%)' : 'Air Quality / Gas Level';
+  myChart.data.datasets[0].borderColor = metric === 'temp' ? '#f85149' : metric === 'humid' ? '#58a6ff' : '#d29922';
+  myChart.data.datasets[0].backgroundColor = metric === 'temp' ? 'rgba(248, 81, 73, 0.1)' : metric === 'humid' ? 'rgba(88, 166, 255, 0.1)' : 'rgba(210, 153, 34, 0.1)';
 
   myChart.update();
 }
@@ -187,15 +198,18 @@ function drawChart() {
 // ─── CROP UI LOGIC ───────────────────────────────────────────────
 function initCropUI() {
   const qc = document.getElementById('quickCrops');
-  const savedTemp = localStorage.getItem('tempThreshold');
-  const savedHumid = localStorage.getItem('humidThreshold');
+  const savedTempMin = localStorage.getItem('tempMinThreshold');
+  const savedTempMax = localStorage.getItem('tempThreshold');
+  const savedHumidMin = localStorage.getItem('humidMinThreshold');
+  const savedHumidMax = localStorage.getItem('humidThreshold');
+  const savedAir = localStorage.getItem('airThreshold'); 
 
-  if (savedTemp) {
-    document.getElementById('tempThreshold').value = savedTemp;
-  }
-  if (savedHumid) {
-    document.getElementById('humidThreshold').value = savedHumid;
-  }
+  if (savedTempMin) document.getElementById('tempMinThreshold').value = savedTempMin;
+  if (savedTempMax) document.getElementById('tempThreshold').value = savedTempMax;
+  if (savedHumidMin) document.getElementById('humidMinThreshold').value = savedHumidMin;
+  if (savedHumidMax) document.getElementById('humidThreshold').value = savedHumidMax;
+  if (savedAir) document.getElementById('airThreshold').value = savedAir; 
+
   const quickCropNames = ['Rice','Wheat','Potato','Onion','Banana','Soybean','Coffee'];
   
   quickCropNames.forEach(name => {
@@ -228,8 +242,11 @@ function initCropUI() {
     list.classList.add('open');
   });
 
+  document.getElementById('tempMinThreshold').addEventListener('change', syncThresholdsToFirebase);
   document.getElementById('tempThreshold').addEventListener('change', syncThresholdsToFirebase);
+  document.getElementById('humidMinThreshold').addEventListener('change', syncThresholdsToFirebase);
   document.getElementById('humidThreshold').addEventListener('change', syncThresholdsToFirebase);
+  document.getElementById('airThreshold').addEventListener('change', syncThresholdsToFirebase); 
 }
 
 function selectCrop(crop) {
@@ -243,25 +260,39 @@ function showCrop(crop, updateThresholds = false) {
   document.getElementById('cropEmoji').textContent = crop.emoji;
   document.getElementById('cropName').textContent = crop.name;
   document.getElementById('cropCategory').textContent = crop.category;
-  document.getElementById('cropTemp').textContent = `${crop.tempMin}–${crop.tempMax}°C`;
-  document.getElementById('cropHumid').textContent = `${crop.humidMin}–${crop.humidMax}%`;
+  
+  document.getElementById('cropTemp').textContent = `${crop.tempMax}°C`;
+  document.getElementById('cropTempRange').textContent = `${crop.tempMin}°C - ${crop.tempMax}°C`;
+  
+  document.getElementById('cropHumid').textContent = `${crop.humidMax}%`;
+  document.getElementById('cropHumidRange').textContent = `${crop.humidMin}% - ${crop.humidMax}%`;
+  
+  document.getElementById('cropAir').textContent = crop.airMax ? `${crop.airMax} Level` : '—';
+  
   document.getElementById('cropNotes').innerHTML = `<strong>📋 Storage Notes:</strong> ${crop.notes}`;
 
   if (updateThresholds) {
+    document.getElementById('tempMinThreshold').value = crop.tempMin;
     document.getElementById('tempThreshold').value = crop.tempMax;
+    document.getElementById('humidMinThreshold').value = crop.humidMin;
     document.getElementById('humidThreshold').value = crop.humidMax;
+    if (crop.airMax) {
+      document.getElementById('airThreshold').value = crop.airMax; 
+    }
     syncThresholdsToFirebase();
   }
 
   const tOk = currentTemp >= crop.tempMin && currentTemp <= crop.tempMax;
   const hOk = currentHumid >= crop.humidMin && currentHumid <= crop.humidMax;
+  const aOk = currentAir <= (crop.airMax || 4095); 
 
   document.getElementById('tempCompareBadge').innerHTML = `<div class="compare-badge ${tOk?'ok':'bad'}">${tOk?'✓ Suitable':'✗ Out of Range'}</div>`;
   document.getElementById('humidCompareBadge').innerHTML = `<div class="compare-badge ${hOk?'ok':'bad'}">${hOk?'✓ Suitable':'✗ Out of Range'}</div>`;
+  document.getElementById('airCompareBadge').innerHTML = `<div class="compare-badge ${aOk?'ok':'bad'}">${aOk?'✓ Safe for this crop':'● DANGEROUS LEVEL'}</div>`; 
 }
 
 // ─── CONTROLS ─────────────────────────────────────────────────────
-const googleSheetsUrl = "https://script.google.com/macros/s/AKfycbwtSlgAaLfV_9a7xQd08zp3t_N6jrdyEtCzqacl63xBXO5xcFsQdNLm8s2Z9PbkWbEL-Q/exec"; // Same URL as in your ESP32
+const googleSheetsUrl = "https://script.google.com/macros/s/AKfycbwFFom4uUb-vFJlWxtzb8u22f2I3xCwQxG1JwaeiBdqLHUoB0_YbkriJdi53HxBHqHT6A/exec"; 
 
 async function fetchStats() {
   try {
@@ -272,70 +303,61 @@ async function fetchStats() {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-
-    // 1. Logic for WEEKLY View
+    console.log(JSON.stringify(data.daily.slice(-3)));
     if (period === 'weekly') {
-  const weeklyArr = new Array(7).fill(0);
-  for (let i = 0; i < 7; i++) {
-    let d = new Date();
-    d.setDate(now.getDate() - (6 - i)); // Look from 6 days ago up to Today
-    
-    let dateKey = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
-    let dayData = data.daily.find(item => item.date === dateKey);
-    
-    if (dayData) {
-      weeklyArr[i] = parseFloat(dayData[currentMetric]);
+      const weeklyArr = new Array(7).fill(0);
+      for (let i = 0; i < 7; i++) {
+        let d = new Date();
+        d.setDate(now.getDate() - (6 - i)); 
+        
+        let dateKey = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+        let dayData = data.daily.find(item => item.date === dateKey);
+        
+        if (dayData && dayData[currentMetric] !== undefined) {
+          weeklyArr[i] = parseFloat(dayData[currentMetric]);
+        }
+      }
+      historicalData.weekly[currentMetric] = weeklyArr;
+
+    } else if (period === 'monthly') {
+      const monthlyArr = new Array(31).fill(0);
+      
+      data.daily.forEach(dayData => {
+        const dateParts = dayData.date.split('-'); 
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]) - 1; 
+        const day = parseInt(dateParts[2]);
+
+        if (month === currentMonth && year === currentYear && dayData[currentMetric] !== undefined) {
+          monthlyArr[day - 1] = parseFloat(dayData[currentMetric]);
+        }
+      });
+      historicalData.monthly[currentMetric] = monthlyArr;
+
+    } else if (period === 'yearly') {
+      const yearlyArr = new Array(12).fill(0);
+      
+      data.monthly.forEach(monthData => {
+        const parts = monthData.date.split('-');
+        const year = parseInt(parts[0]);
+        const monthIndex = parseInt(parts[1]) - 1; 
+
+        if (year === currentYear && monthData[currentMetric] !== undefined) {
+          yearlyArr[monthIndex] = parseFloat(monthData[currentMetric]);
+        }
+      });
+      historicalData.yearly[currentMetric] = yearlyArr;
     }
-  }
-  historicalData.weekly[currentMetric] = weeklyArr;
 
-
-
-    // 2. Logic for MONTHLY View (With filtering)
-    }  else if (period === 'monthly') {
-  const monthlyArr = new Array(31).fill(0);
-  
-  data.daily.forEach(dayData => {
-    // Split the "2026-02-05" string sent by the updated Apps Script
-    const dateParts = dayData.date.split('-'); 
-    const year = parseInt(dateParts[0]);
-    const month = parseInt(dateParts[1]) - 1; 
-    const day = parseInt(dateParts[2]);
-
-    if (month === currentMonth && year === currentYear) {
-      monthlyArr[day - 1] = parseFloat(dayData[currentMetric]);
-    }
-  });
-  historicalData.monthly[currentMetric] = monthlyArr;
-
-    // 3. Logic for YEARLY View
-    } // 3. Logic for YEARLY View (Fixed for full year visibility)
- else if (period === 'yearly') {
-  const yearlyArr = new Array(12).fill(0);
-  
-  // Directly map the data returned from Google Sheets
-  data.monthly.forEach(monthData => {
-    // Split "2026-07" into ["2026", "07"]
-    const parts = monthData.date.split('-');
-    const year = parseInt(parts[0]);
-    const monthIndex = parseInt(parts[1]) - 1; // 07 becomes index 6 (July)
-
-    if (year === currentYear) {
-      yearlyArr[monthIndex] = parseFloat(monthData[currentMetric]);
-    }
-  });
-  historicalData.yearly[currentMetric] = yearlyArr;
-}
-
-    // 4. Update Stat Boxes based on the FILTERED data
     const currentData = historicalData[period][metric].filter(val => val > 0);
 
     if (currentData.length > 0) {
-      const maxVal = Math.max(...currentData).toFixed(1);
-      const minVal = Math.min(...currentData).toFixed(1);
-      const avgVal = (currentData.reduce((a, b) => a + b, 0) / currentData.length).toFixed(1);
+      const maxVal = Math.max(...currentData).toFixed(metric === 'air' ? 0 : 1);
+      const minVal = Math.min(...currentData).toFixed(metric === 'air' ? 0 : 1);
+      const avgVal = (currentData.reduce((a, b) => a + b, 0) / currentData.length).toFixed(metric === 'air' ? 0 : 1);
 
-      const unit = (metric === 'temp' ? '°C' : '%');
+      const unit = (metric === 'temp' ? '°C' : metric === 'humid' ? '%' : ' Level');
+
       document.getElementById('statAvg').innerHTML = `${avgVal}<span class="stat-box-unit">${unit}</span>`;
       document.getElementById('statMax').innerHTML = `${maxVal}<span class="stat-box-unit">${unit}</span>`;
       document.getElementById('statMin').innerHTML = `${minVal}<span class="stat-box-unit">${unit}</span>`;
@@ -345,36 +367,48 @@ async function fetchStats() {
       document.getElementById('statMin').innerHTML = `--`;
     }
 
-    drawChart(); //
+    drawChart(); 
 
   } catch (error) {
     console.error("Error fetching stats:", error);
   }
 }
 
-// Call this once when the page loads
 fetchStats();
-// And call it whenever the user switches between Temp/Humid
+
+// ─── ESP32 OFFLINE DETECTION ─────────────────────────────────────
+setInterval(() => {
+  db.ref('warehouse/lastSeen').once('value', (snap) => {
+    const lastSeen = snap.val();
+    if (!lastSeen) return;
+    const ageSeconds = Math.floor(Date.now() / 1000) - lastSeen;
+    const banner = document.getElementById('alertBanner');
+    if (ageSeconds > 30) {
+      document.getElementById('alertText').textContent = 
+        ` ESP32 offline! Last data received ${Math.floor(ageSeconds / 60)} min ago.`;
+      banner.style.display = 'flex';
+      banner.className = 'alert-banner danger';
+    }
+  });
+}, 15000); // checks every 15 seconds
+
 function setMetric(m, el) {
   metric = m;
   document.querySelectorAll('.metric-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  fetchStats(); // Fresh fetch for the new metric
+  fetchStats(); 
 }
 
 function setPeriod(p, el) {
   period = p;
-  // Update UI active state
   document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  
-  // Fetch fresh stats from Google Sheets for the new period
   fetchStats(); 
 }
+
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.removeItem('isLoggedIn'); // Clear login flag
-  window.location.href = 'login.html'; // Redirect back to login
+  localStorage.removeItem('isLoggedIn'); 
+  window.location.href = 'login.html'; 
 });
 
 loadCrops();
-
