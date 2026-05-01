@@ -7,10 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script>
-  if (localStorage.getItem('isLoggedIn') !== 'true') {
-    window.location.href = 'login.html'; // Redirect to login if not authenticated
-  }
-</script>
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'login.html'; // Redirect to login if not authenticated
+      }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -23,17 +23,15 @@
         <div class="logo-text">Crop<span>Vault</span></div>
       </div>
   
-<button id="logoutBtn" class="status-badge" style="cursor:pointer; margin-left:10px;">
-  LOGOUT
-</button>
+      <button id="logoutBtn" class="status-badge" style="cursor:pointer; margin-left:10px;">
+        LOGOUT
+      </button>
       <div class="status-badge">
         <div class="pulse"></div>
         LIVE MONITORING
       </div>
     </div>
-    
   </div>
-  
 </header>
 
 <main>
@@ -61,20 +59,41 @@
         <div class="reading-status" id="humidStatus">● Normal</div>
         <div class="reading-bg-icon">💧</div>
       </div>
+      <div class="reading-card" id="airCard">
+        <div class="reading-label">Air Quality</div>
+        <div class="reading-value" id="airValue">--<span class="reading-unit"> Level</span></div>
+        <div class="reading-status" id="airStatus">● Normal</div>
+        <div class="reading-bg-icon">💨</div>
+      </div>
     </div>
 
     <div class="section-title">Threshold Settings</div>
     <div class="threshold-section">
       <div class="threshold-grid">
         <div class="threshold-item">
+          <label>Min Temperature (°C)</label>
+          <input type="number" id="tempMinThreshold" value="10" min="-20" max="100">
+          <div class="threshold-hint">Alert triggers below this</div>
+        </div>
+        <div class="threshold-item">
           <label>Max Temperature (°C)</label>
-          <input type="number" id="tempThreshold" value="30" min="0" max="100">
-          <div class="threshold-hint">Alert triggers above this value</div>
+          <input type="number" id="tempThreshold" value="30" min="-20" max="100">
+          <div class="threshold-hint">Alert triggers above this</div>
+        </div>
+        <div class="threshold-item">
+          <label>Min Humidity (%)</label>
+          <input type="number" id="humidMinThreshold" value="50" min="0" max="100">
+          <div class="threshold-hint">Alert triggers below this</div>
         </div>
         <div class="threshold-item">
           <label>Max Humidity (%)</label>
           <input type="number" id="humidThreshold" value="70" min="0" max="100">
-          <div class="threshold-hint">Alert triggers above this value</div>
+          <div class="threshold-hint">Alert triggers above this</div>
+        </div>
+        <div class="threshold-item">
+          <label>Max Gas / Air Quality</label>
+          <input type="number" id="airThreshold" value="1000" min="0" max="4000">
+          <div class="threshold-hint">Alert triggers above this</div>
         </div>
       </div>
     </div>
@@ -90,6 +109,7 @@
         <div class="metric-tabs">
           <button class="metric-tab active" onclick="setMetric('temp',this)">Temperature</button>
           <button class="metric-tab" onclick="setMetric('humid',this)">Humidity</button>
+          <button class="metric-tab" onclick="setMetric('air',this)">Air Quality</button>
         </div>
       </div>
 
@@ -143,6 +163,12 @@
             <div class="crop-stat-value" id="cropHumid">—</div>
             <div class="crop-stat-range" id="cropHumidRange">—</div>
             <div id="humidCompareBadge"></div>
+          </div>
+          <div class="crop-stat">
+            <div class="crop-stat-label">💨 Max Air Quality (Gas)</div>
+            <div class="crop-stat-value" id="cropAir">—</div>
+            <div class="crop-stat-range">Spoilage Limit</div>
+            <div id="airCompareBadge"></div>
           </div>
           <div class="crop-notes" id="cropNotes"></div>
         </div>
